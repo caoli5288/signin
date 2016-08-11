@@ -1,0 +1,15 @@
+name: SignIn
+main: com.i5mc.signin.Main
+version: ${project.version}
+
+commands:
+  signin:
+    description: None.
+    permission: signin.use
+
+permissions:
+  signin.use:
+    description: None.
+    default: true
+
+depend: [Account, PlayerPoints]
