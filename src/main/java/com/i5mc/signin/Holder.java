@@ -21,10 +21,10 @@ public class Holder implements InventoryHolder, Closeable {
     private final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final static String[] MESSAGE = {
             "",
-            "请前往论坛签到后，重新",
-            "登陆游戏以领取今日奖励",
+            "§c请前往论坛签到后，重新",
+            "§c进入大厅以领取今日奖励",
             "",
-            "论坛地址：www.i5mc.com"
+            "§3论坛地址： §e§nwww.i5mc.com"
     };
 
     private final SignIn signIn;
@@ -65,12 +65,12 @@ public class Holder implements InventoryHolder, Closeable {
 
     private List<String> getInfo() {
         return LineList.of(
-                reward() ? "点击领奖" : "已经领取",
+                reward() ? "§e点击领奖" : "§c已经领取",
                 "",
-                "今日奖励：" + signIn.getLastreward() + "点",
+                "§3今日奖励： §e" + signIn.getLastreward() + "§3点券",
                 "",
-                "连签天数：" + signIn.getLasted(),
-                "总签天数：" + signIn.getDays()
+                "§3连签天数： §e" + signIn.getLasted(),
+                "§3总签天数： §e" + signIn.getDays()
         );
     }
 

@@ -4,7 +4,6 @@ import com.i5mc.signin.entity.SignIn;
 import com.mengcraft.account.Account;
 import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -64,7 +63,10 @@ public class Executor implements CommandExecutor, Listener {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
-        map.remove(event.getPlayer().getUniqueId());
+        Holder remove = map.remove(event.getPlayer().getUniqueId());
+        if (remove != null) {
+            remove.close();
+        }
     }
 
     @EventHandler
@@ -84,7 +86,7 @@ public class Executor implements CommandExecutor, Listener {
                 main.process(() -> {
                     j.update();
                     p.closeInventory();
-                    p.sendMessage(ChatColor.GREEN + "领取了签到奖励" + j.signIn().getLastreward() + "点");
+                    p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + j.signIn().getLastreward() + " §a点券");
                 });
             });
         }
