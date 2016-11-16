@@ -81,12 +81,13 @@ public class Executor implements CommandExecutor, Listener {
         if (j.signed() && j.reward()) {
             j.signIn().setTimeApp(j.signIn().getTime() + 1);
             main.execute(() -> {
-                point.give(p.getUniqueId(), j.signIn().getLastreward());
+                int reward = j.signIn().getLastreward() + main.getLastedReward(j.signIn().getLasted());
+                point.give(p.getUniqueId(), reward);
                 main.getDatabase().save(j.signIn());
                 main.process(() -> {
                     j.update();
                     p.closeInventory();
-                    p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + j.signIn().getLastreward() + " §a点券");
+                    p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + reward + " §a点券");
                 });
             });
         }

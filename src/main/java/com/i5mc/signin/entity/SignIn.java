@@ -9,7 +9,7 @@ import javax.persistence.Table;
  * Created on 16-8-10.
  */
 @Entity
-@Table(name = "pre_dsu_paulsign")
+@Table(name = "pre_plugin_k_misign")
 public class SignIn {
 
     @Id

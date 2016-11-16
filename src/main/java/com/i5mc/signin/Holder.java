@@ -67,9 +67,10 @@ public class Holder implements InventoryHolder, Closeable {
         return LineList.of(
                 reward() ? "§e点击领奖" : "§c已经领取",
                 "",
-                "§3今日奖励： §e" + signIn.getLastreward() + "§3点券",
+                "§3基础奖励： §e" + signIn.getLastreward() + "§3点券",
                 "",
                 "§3连签天数： §e" + signIn.getLasted(),
+                "§3额外奖励： §e" + main.getLastedReward(signIn.getLasted()),
                 "§3总签天数： §e" + signIn.getDays()
         );
     }
