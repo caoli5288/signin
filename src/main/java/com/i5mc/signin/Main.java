@@ -4,15 +4,22 @@ import com.i5mc.signin.entity.SignIn;
 import com.mengcraft.simpleorm.DatabaseException;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import lombok.val;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created on 16-8-10.
  */
 public class Main extends JavaPlugin {
 
+    private static Main plugin;
+
     @Override
     public void onEnable() {
+        plugin = this;
         EbeanHandler handler = EbeanManager.DEFAULT.getHandler(this);
         if (handler.isNotInitialized()) {
             handler.define(SignIn.class);
@@ -28,6 +35,13 @@ public class Main extends JavaPlugin {
 
         getCommand("signin").setExecutor(executor);
         getServer().getPluginManager().registerEvents(executor, this);
+
+        val hook = new MyPlaceholder(this);
+        hook.hook();
+    }
+
+    public static Main getPlugin() {
+        return plugin;
     }
 
     public int getLastedReward(int day) {
@@ -64,8 +78,8 @@ public class Main extends JavaPlugin {
         return 0;
     }
 
-    public void execute(Runnable j) {
-        getServer().getScheduler().runTaskAsynchronously(this, j);
+    public void execute(Runnable r) {
+        CompletableFuture.runAsync(r);
     }
 
     public void process(Runnable j) {

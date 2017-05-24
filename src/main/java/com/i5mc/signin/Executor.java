@@ -1,7 +1,6 @@
 package com.i5mc.signin;
 
 import com.i5mc.signin.entity.SignIn;
-import com.mengcraft.account.Account;
 import org.black_ixx.playerpoints.PlayerPoints;
 import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.command.Command;
@@ -43,12 +42,14 @@ public class Executor implements CommandExecutor, Listener {
         if (map.containsKey(p.getUniqueId())) {
             p.openInventory(map.get(p.getUniqueId()).getInventory());
         } else if (locked.add(p.getUniqueId())) {
-            main.execute(() -> {// IO blocking
-                SignIn in = main.getDatabase().find(SignIn.class, Account.INSTANCE.getMemberKey(p));
-                main.process(() -> {
-                    process(p, in);
+            SignIn in = L2Pool.INSTANCE.get(p);
+            if (in == null) {
+                main.execute(() -> {// IO blocking
+                    main.process(() -> process(p, L2Pool.INSTANCE.fetch(p)));
                 });
-            });
+            } else {
+                main.process(() -> process(p, in));
+            }
         }
         return true;
     }

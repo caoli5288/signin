@@ -10,6 +10,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.Closeable;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -52,11 +53,11 @@ public class Holder implements InventoryHolder, Closeable {
         meta.setDisplayName(ChatColor.GOLD + "每日签到");
 
         if (Main.eq(signIn, null)) {
-            meta.setLore(LineList.of(MESSAGE));
+            meta.setLore(Arrays.asList(MESSAGE));
         } else if (signed || (signed = Main.eq(FORMAT.format(new Date(signIn.getTime() * 1000L)), FORMAT.format(new Date())))) {
             meta.setLore(getInfo());
         } else {
-            meta.setLore(LineList.of(MESSAGE));
+            meta.setLore(Arrays.asList(MESSAGE));
         }
         item.setItemMeta(meta);
 
@@ -64,7 +65,7 @@ public class Holder implements InventoryHolder, Closeable {
     }
 
     private List<String> getInfo() {
-        return LineList.of(
+        return Arrays.asList(
                 reward() ? "§e点击领奖" : "§c已经领取",
                 "",
                 "§3基础奖励： §e" + signIn.getLastreward() + "§3点券",
