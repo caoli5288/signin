@@ -9,9 +9,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.Closeable;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -19,7 +17,6 @@ import java.util.List;
  */
 public class Holder implements InventoryHolder, Closeable {
 
-    private final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final static String[] MESSAGE = {
             "",
             "§c请前往论坛签到后，重新",
@@ -44,7 +41,7 @@ public class Holder implements InventoryHolder, Closeable {
     }
 
     public void update() {
-        if (Main.eq(inventory, null)) {
+        if ($.nil(inventory)) {
             inventory = main.getServer().createInventory(this, 9, "每日签到");
         }
 
@@ -52,9 +49,9 @@ public class Holder implements InventoryHolder, Closeable {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.GOLD + "每日签到");
 
-        if (Main.eq(signIn, null)) {
+        if ($.nil(signIn)) {
             meta.setLore(Arrays.asList(MESSAGE));
-        } else if (signed || (signed = Main.eq(FORMAT.format(new Date(signIn.getTime() * 1000L)), FORMAT.format(new Date())))) {
+        } else if (signed || (signed = $.today(signIn.getTime()))) {
             meta.setLore(getInfo());
         } else {
             meta.setLore(Arrays.asList(MESSAGE));

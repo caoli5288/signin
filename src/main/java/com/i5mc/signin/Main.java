@@ -5,9 +5,9 @@ import com.mengcraft.simpleorm.DatabaseException;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import lombok.val;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -87,6 +87,7 @@ public class Main extends JavaPlugin {
     }
 
     public static boolean eq(Object i, Object j) {
-        return i == j || (i != null && i.equals(j));
+        return Objects.equals(i, j);
     }
+
 }

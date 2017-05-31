@@ -78,15 +78,15 @@ public class Executor implements CommandExecutor, Listener {
         }
     }
 
-    private void process(Player p, Holder j) {
-        if (j.signed() && j.reward()) {
-            j.signIn().setTimeApp(j.signIn().getTime() + 1);
+    private void process(Player p, Holder holder) {
+        if (holder.signed() && holder.reward()) {
+            holder.signIn().setTimeApp(holder.signIn().getTime() + 1);
             main.execute(() -> {
-                int reward = j.signIn().getLastreward() + main.getLastedReward(j.signIn().getLasted());
+                int reward = holder.signIn().getLastreward() + main.getLastedReward(holder.signIn().getLasted());
                 point.give(p.getUniqueId(), reward);
-                main.getDatabase().save(j.signIn());
+                main.getDatabase().save(holder.signIn());
                 main.process(() -> {
-                    j.update();
+                    holder.update();
                     p.closeInventory();
                     p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + reward + " §a点券");
                 });

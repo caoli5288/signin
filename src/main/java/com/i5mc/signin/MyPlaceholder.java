@@ -8,6 +8,8 @@ import org.bukkit.plugin.Plugin;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static com.i5mc.signin.$.nil;
+
 /**
  * Created on 17-5-25.
  */
@@ -24,20 +26,20 @@ public class MyPlaceholder extends EZPlaceholderHook {
 
     private static String today(Player p, Iterator<String> input) {
         val i = L2Pool.INSTANCE.get(p);
-        if (i == null) {
+        if (nil(i)) {
             Main.getPlugin().execute(() -> L2Pool.INSTANCE.fetch(p));
             return "";
         }
-        return i.getTime() > i.getTimeApp() ? "" : "true";
+        return $.today(i.getTime()) && i.getTimeApp() > i.getTime() ? "true" : "";
     }
 
-    private enum $ {
+    private enum Lab {
 
         TODAY(MyPlaceholder::today);
 
         private final IReq req;
 
-        $(IReq req) {
+        Lab(IReq req) {
             this.req = req;
         }
     }
@@ -49,7 +51,7 @@ public class MyPlaceholder extends EZPlaceholderHook {
         if (input.hasNext()) {
             val label = input.next().toUpperCase();
             try {
-                return $.valueOf(label).req.request(p, input);
+                return Lab.valueOf(label).req.request(p, input);
             } catch (IllegalArgumentException e) {
 //                ;
             }
