@@ -82,7 +82,7 @@ public class Main extends JavaPlugin {
         CompletableFuture.runAsync(r);
     }
 
-    public void process(Runnable j) {
+    public void run(Runnable j) {
         getServer().getScheduler().runTask(this, j);
     }
 
