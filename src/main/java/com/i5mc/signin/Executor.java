@@ -64,8 +64,9 @@ public class Executor implements CommandExecutor, Listener {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
+        L2Pool.INSTANCE.quit(event.getPlayer());
         Holder remove = map.remove(event.getPlayer().getUniqueId());
-        if (remove != null) {
+        if (!$.nil(remove)) {
             remove.close();
         }
     }

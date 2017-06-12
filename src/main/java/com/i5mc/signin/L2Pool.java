@@ -25,6 +25,10 @@ public enum L2Pool {
         return pool.get(p.getUniqueId());
     }
 
+    public void quit(Player p) {
+        pool.remove(p.getUniqueId());
+    }
+
     public SignIn fetch(Player p) {
         return pool.computeIfAbsent(p.getUniqueId(), i -> Main.getPlugin()
                 .getDatabase()
