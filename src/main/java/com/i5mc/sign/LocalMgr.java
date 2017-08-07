@@ -14,10 +14,10 @@ public enum LocalMgr {
     INSTANCE;
 
     private Map<Integer, ExtGift> mapping;
-    private int daily;
+    private ExtGift daily;
 
     public static void init(FileConfiguration i) {
-        INSTANCE.daily = i.getInt("daily");
+        INSTANCE.daily = new ExtGift(i.getConfigurationSection("daily"));
         ImmutableMap.Builder<Integer, ExtGift> b = ImmutableMap.builder();
         for (val l : i.getMapList("last")) {
             val gift = new ExtGift(l);
@@ -26,7 +26,7 @@ public enum LocalMgr {
         INSTANCE.mapping = b.build();
     }
 
-    public static int getDaily() {
+    public static ExtGift getDaily() {
         return INSTANCE.daily;
     }
 

@@ -1,4 +1,7 @@
-daily: 10
+daily:
+  display: ""
+  command:
+  - "command %player%"
 last:
 - day: 20
   display: ""

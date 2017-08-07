@@ -12,4 +12,4 @@ permissions:
     description: None.
     default: true
 
-depend: [SimpleORM, PlayerPoints, PlaceholderAPI]
+depend: [SimpleORM, PlaceholderAPI]

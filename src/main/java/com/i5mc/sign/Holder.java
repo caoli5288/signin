@@ -9,6 +9,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.Closeable;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class Holder implements InventoryHolder, Closeable {
         } else {
             b.add("§e点击领奖");
             b.add("");
-            b.add("§3基础奖励： §e" + LocalMgr.getDaily() + "§3点券");
+            b.add("§3基础奖励： §e" + LocalMgr.getDaily().getDisplay());
             val gift = LocalMgr.getLast(1 + sign.getLasted());
             if (!nil(gift)) {
                 b.add("§3额外奖励： §e" + gift.getDisplay());
@@ -73,7 +74,10 @@ public class Holder implements InventoryHolder, Closeable {
 
         b.add("§3连签天数： §e" + sign.getLasted());
         b.add("§3总签天数： §e" + sign.getDayTotal());
-        b.add("§3上次签到： §e" + sign.getLatest().toString().substring(0, 16));
+        val latest = sign.getLatest();
+        if (!nil(latest)) {
+            b.add("§3上次签到： §e" + latest.toString().substring(0, 16));
+        }
 
         return b.build();
     }

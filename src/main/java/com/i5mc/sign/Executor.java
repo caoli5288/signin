@@ -1,8 +1,6 @@
 package com.i5mc.sign;
 
 import lombok.val;
-import org.black_ixx.playerpoints.PlayerPoints;
-import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,7 +9,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -28,7 +25,6 @@ import static com.i5mc.sign.$.nil;
  */
 public class Executor implements CommandExecutor, Listener {
 
-    private final PlayerPointsAPI point = JavaPlugin.getPlugin(PlayerPoints.class).getAPI();
     private final Map<UUID, Holder> map = new HashMap<>();// Always in main thread
     private final Set<UUID> locked = new HashSet<>();
     private final Main main;
@@ -112,18 +108,22 @@ public class Executor implements CommandExecutor, Listener {
             holder.signed = true;// safety
             main.execute(() -> {
                 val sign = holder.sign;
-                int daily = LocalMgr.getDaily();
-                point.give(p.getUniqueId(), daily);
-                p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + daily + " §a点券");
+                val daily = LocalMgr.getDaily();
+
                 sign.setDayTotal(1 + sign.getDayTotal());
                 sign.setLasted(1 + sign.getLasted());
                 sign.setLatest(new Timestamp(System.currentTimeMillis()));
 
+                val srv = p.getServer();
+                val con = srv.getConsoleSender();
+                for (String l : daily.getCommand()) {
+                    srv.dispatchCommand(con, l.replace("%player%", p.getName()));
+                }
+                p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + daily.getDisplay());
+
                 val gift = LocalMgr.getLast(sign.getLasted());
                 if (!nil(gift)) {
-                    val srv = p.getServer();
                     List<String> list = gift.getCommand();
-                    val con = srv.getConsoleSender();
                     for (String l : list) {
                         srv.dispatchCommand(con, l.replace("%player%", p.getName()));
                     }
