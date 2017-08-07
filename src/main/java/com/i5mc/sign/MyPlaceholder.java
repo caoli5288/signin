@@ -1,14 +1,15 @@
-package com.i5mc.signin;
+package com.i5mc.sign;
 
 import lombok.val;
 import me.clip.placeholderapi.external.EZPlaceholderHook;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static com.i5mc.signin.$.nil;
+import static com.i5mc.sign.$.nil;
 
 /**
  * Created on 17-5-25.
@@ -30,7 +31,7 @@ public class MyPlaceholder extends EZPlaceholderHook {
             Main.getPlugin().execute(() -> L2Pool.INSTANCE.fetch(p));
             return "";
         }
-        return $.today(i.getTime()) && i.getTimeApp() > i.getTime() ? "true" : "";
+        return i.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now()) ? "true" : "";
     }
 
     private enum Lab {

@@ -1,13 +1,13 @@
-package com.i5mc.signin;
+package com.i5mc.sign;
 
-import com.i5mc.signin.entity.SignIn;
 import com.mengcraft.simpleorm.DatabaseException;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import lombok.val;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Objects;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -19,10 +19,12 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
         plugin = this;
         EbeanHandler handler = EbeanManager.DEFAULT.getHandler(this);
         if (handler.isNotInitialized()) {
-            handler.define(SignIn.class);
+            handler.define(LocalSign.class);
             try {
                 handler.initialize();
             } catch (DatabaseException e) {
@@ -30,10 +32,16 @@ public class Main extends JavaPlugin {
             }
         }
         handler.reflect();
+        handler.install();
+
+        LocalMgr.init(getConfig());
 
         Executor executor = new Executor(this);
 
-        getCommand("signin").setExecutor(executor);
+        PluginCommand command = getCommand("sign");
+        command.setExecutor(executor);
+        command.setAliases(Arrays.asList("签到", "每日签到"));
+
         getServer().getPluginManager().registerEvents(executor, this);
 
         val hook = new MyPlaceholder(this);
@@ -44,40 +52,6 @@ public class Main extends JavaPlugin {
         return plugin;
     }
 
-    public int getLastedReward(int day) {
-        if (day > 364) {
-            return 50;
-        }
-        if (day > 179) {
-            return 30;
-        }
-        if (day > 89) {
-            return 20;
-        }
-        if (day > 34) {
-            return 15;
-        }
-        if (day > 19) {
-            return 10;
-        }
-        if (day > 14) {
-            return 8;
-        }
-        if (day > 9) {
-            return 5;
-        }
-        if (day > 6) {
-            return 3;
-        }
-        if (day > 4) {
-            return 2;
-        }
-        if (day > 2) {
-            return 1;
-        }
-        return 0;
-    }
-
     public void execute(Runnable r) {
         CompletableFuture.runAsync(r);
     }
@@ -86,8 +60,8 @@ public class Main extends JavaPlugin {
         getServer().getScheduler().runTask(this, j);
     }
 
-    public static boolean eq(Object i, Object j) {
-        return Objects.equals(i, j);
+    public static void log(String message) {
+        plugin.getLogger().info(message);
     }
 
 }

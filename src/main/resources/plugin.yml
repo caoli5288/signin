@@ -1,9 +1,9 @@
-name: SignIn
-main: com.i5mc.signin.Main
+name: sign
+main: com.i5mc.sign.Main
 version: ${project.version}
 
 commands:
-  signin:
+  sign:
     description: None.
     permission: signin.use
 
@@ -12,4 +12,4 @@ permissions:
     description: None.
     default: true
 
-depend: [Account, PlayerPoints]
+depend: [SimpleORM, PlayerPoints, PlaceholderAPI]

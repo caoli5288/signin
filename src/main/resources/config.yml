@@ -1,0 +1,7 @@
+daily: 10
+last:
+- day: 20
+  display: ""
+  command:
+  - "command %player%"
+total: ~
