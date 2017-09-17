@@ -25,18 +25,17 @@ public class MyPlaceholder extends EZPlaceholderHook {
         String request(Player p, Iterator<String> input);
     }
 
-    private static String today(Player p, Iterator<String> input) {
-        val i = L2Pool.INSTANCE.get(p);
-        if (nil(i)) {
-            Main.getPlugin().execute(() -> L2Pool.INSTANCE.fetch(p));
-            return "";
-        }
-        return i.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now()) ? "true" : "";
-    }
-
     private enum Lab {
 
-        TODAY(MyPlaceholder::today);
+        TODAY((p, input) -> {
+            val i = L2Pool.INSTANCE.fetch(p);
+            return i.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now()) ? "true" : "";
+        }),
+
+        TOTAL((p, input) -> {
+            val i = L2Pool.INSTANCE.fetch(p);
+            return "" + i.getDayTotal();
+        });
 
         private final IReq req;
 
@@ -53,7 +52,7 @@ public class MyPlaceholder extends EZPlaceholderHook {
             val label = input.next().toUpperCase();
             try {
                 return Lab.valueOf(label).req.request(p, input);
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException ign) {
 //                ;
             }
         }

@@ -1,6 +1,5 @@
 package com.i5mc.sign;
 
-import com.avaje.ebean.annotation.UpdatedTimestamp;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
