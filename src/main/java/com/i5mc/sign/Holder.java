@@ -1,6 +1,7 @@
 package com.i5mc.sign;
 
 import com.google.common.collect.ImmutableList;
+import com.i5mc.sign.entity.LocalSign;
 import lombok.val;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -9,7 +10,6 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.Closeable;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 

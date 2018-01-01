@@ -4,6 +4,7 @@ version: ${project.version}
 
 commands:
   sign:
+    aliases: ['签到','每日签到']
     description: None.
     permission: signin.use
 

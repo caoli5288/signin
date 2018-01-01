@@ -1,5 +1,7 @@
 package com.i5mc.sign;
 
+import com.i5mc.sign.entity.LocalSign;
+import com.i5mc.sign.entity.SignLogging;
 import lombok.val;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,6 +13,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,7 +53,7 @@ public class Executor implements CommandExecutor, Listener {
             val hold = map.get(p.getUniqueId());
             if (nil(hold)) {
                 main.execute(() -> {
-                    val in = L2Pool.INSTANCE.fetch(p);
+                    val in = L2Pool.local(p);
                     main.run(() -> {
                         map.put(p.getUniqueId(), Holder.of(main, in));
                         sign(p);
@@ -66,13 +69,13 @@ public class Executor implements CommandExecutor, Listener {
         if (map.containsKey(p.getUniqueId())) {
             p.openInventory(map.get(p.getUniqueId()).getInventory());
         } else if (locked.add(p.getUniqueId())) {
-            val sign = L2Pool.INSTANCE.get(p);
-            if (sign == null) {
+            val local = L2Pool.pick(p);
+            if (local == null) {
                 main.execute(() -> {// IO blocking
-                    main.run(() -> process(p, L2Pool.INSTANCE.fetch(p)));
+                    main.run(() -> process(p, L2Pool.local(p)));
                 });
             } else {
-                main.run(() -> process(p, sign));
+                main.run(() -> process(p, local));
             }
         }
         return true;
@@ -88,7 +91,7 @@ public class Executor implements CommandExecutor, Listener {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
-        L2Pool.INSTANCE.quit(event.getPlayer());
+        L2Pool.quit(event.getPlayer());
         Holder remove = map.remove(event.getPlayer().getUniqueId());
         if (!nil(remove)) {
             remove.close();
@@ -107,12 +110,18 @@ public class Executor implements CommandExecutor, Listener {
         if (!holder.signed) {
             holder.signed = true;// safety
             main.execute(() -> {
-                val sign = holder.sign;
+                val local = holder.sign;
                 val daily = LocalMgr.getDaily();
 
-                sign.setDayTotal(1 + sign.getDayTotal());
-                sign.setLasted(1 + sign.getLasted());
-                sign.setLatest(new Timestamp(System.currentTimeMillis()));
+                local.setDayTotal(1 + local.getDayTotal());
+
+                if (local.getLasted() < 1) {
+                    local.setLasted(1);
+                } else {
+                    local.setLasted(1 + local.getLasted());
+                }
+
+                local.setLatest(new Timestamp(System.currentTimeMillis()));
 
                 val srv = p.getServer();
                 val con = srv.getConsoleSender();
@@ -121,7 +130,7 @@ public class Executor implements CommandExecutor, Listener {
                 }
                 p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + daily.getDisplay());
 
-                val gift = LocalMgr.getLast(sign.getLasted());
+                val gift = LocalMgr.getLast(local.getLasted());
                 if (!nil(gift)) {
                     List<String> list = gift.getCommand();
                     for (String l : list) {
@@ -130,7 +139,17 @@ public class Executor implements CommandExecutor, Listener {
                     p.sendMessage("§b梦世界 §l>> §a您领取了额外奖励§e " + gift.getDisplay());
                 }
 
-                main.getDatabase().save(sign);
+                main.getDatabase().save(local);
+
+                SignLogging logging = main.getDatabase().createEntityBean(SignLogging.class);
+                logging.setPlayer(p.getUniqueId());
+                logging.setName(p.getName());
+                logging.setDateSigned(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+                main.getDatabase().save(logging);
+
+                L2Pool.put(p.getName() + ":day:" + LocalDate.now(), logging);
+
                 main.run(() -> {
                     holder.update();
                     val view = p.getOpenInventory();

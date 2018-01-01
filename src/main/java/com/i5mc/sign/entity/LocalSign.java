@@ -1,8 +1,9 @@
-package com.i5mc.sign;
+package com.i5mc.sign.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.sql.Timestamp;
@@ -18,6 +19,8 @@ public class LocalSign {
 
     @Id
     private UUID id;
+    @Column(length = 16)
+    private String name;
     private int dayTotal;
     private int lasted;
     private Timestamp latest;

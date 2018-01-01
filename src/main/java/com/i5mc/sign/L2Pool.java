@@ -1,11 +1,15 @@
 package com.i5mc.sign;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.i5mc.sign.entity.LocalSign;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.bukkit.entity.Player;
 
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.i5mc.sign.$.nil;
 
@@ -16,33 +20,51 @@ public enum L2Pool {
 
     INSTANCE;
 
-    private final Map<UUID, LocalSign> pool = new ConcurrentHashMap<>();
+    private final Cache<String, Object> pool = CacheBuilder.newBuilder()
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .build();
 
-    public LocalSign get(Player p) {
-        return pool.get(p.getUniqueId());
+    private final Object invalid = new Object();
+
+    public static LocalSign pick(Player p) {
+        return (LocalSign) INSTANCE.pool.asMap().get(p.getName() + ":local");
     }
 
-    public void quit(Player p) {
-        pool.remove(p.getUniqueId());
+    public static void put(String key, Object any) {
+        INSTANCE.pool.put(key, any);
     }
 
-    public LocalSign fetch(Player p) {
-        return pool.computeIfAbsent(p.getUniqueId(), i -> {
-                    LocalSign sign = Main.getPlugin()
-                            .getDatabase()
-                            .find(LocalSign.class, p.getUniqueId());
-                    if (nil(sign)) {
-                        sign = Main.getPlugin().getDatabase().createEntityBean(LocalSign.class);
-                        sign.setId(i);
-                    } else {
-                        int l = sign.getLatest().toLocalDateTime().toLocalDate().compareTo(LocalDate.now());
-                        if (Math.abs(l) > 1) {
-                            sign.setLasted(0);
-                        }
-                    }
-                    return sign;
+    @SneakyThrows
+    public static <T> T pull(String key, Supplier<T> supplier) {
+        val pull = INSTANCE.pool.get(key, () -> {
+            T value = supplier.get();
+            return value == null ? INSTANCE.invalid : value;
+        });
+        return pull == INSTANCE.invalid ? null : (T) pull;
+    }
+
+    public static void quit(Player p) {
+        INSTANCE.pool.invalidate(p.getName() + ":local");
+    }
+
+    @SneakyThrows
+    public static LocalSign local(Player p) {
+        return (LocalSign) INSTANCE.pool.get(p.getName() + ":local", () -> {
+            LocalSign local = Main.getPlugin()
+                    .getDatabase()
+                    .find(LocalSign.class, p.getUniqueId());
+            if (nil(local)) {
+                local = Main.getPlugin().getDatabase().createEntityBean(LocalSign.class);
+                local.setId(p.getUniqueId());
+                local.setName(p.getName());
+            } else {
+                if (LocalDate.now().toEpochDay() - local.getLatest().toLocalDateTime().toLocalDate().toEpochDay() > 1) {
+                    local.setLasted(-1);
                 }
-        );
+                if (nil(local.getName())) local.setName(p.getName());
+            }
+            return local;
+        });
     }
 
 }
