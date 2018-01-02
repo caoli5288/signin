@@ -72,7 +72,7 @@ public class Holder implements InventoryHolder, Closeable {
             b.add("");
         }
 
-        b.add("§3连签天数： §e" + sign.getLasted());
+        b.add("§3连签天数： §e" + (sign.getLasted() < 1 ? "断签" : String.valueOf(sign.getLasted())));
         b.add("§3总签天数： §e" + sign.getDayTotal());
         val latest = sign.getLatest();
         if (!nil(latest)) {

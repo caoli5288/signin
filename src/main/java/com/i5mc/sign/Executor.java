@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static com.i5mc.sign.$.nil;
 
@@ -37,6 +38,10 @@ public class Executor implements CommandExecutor, Listener {
 
     public Executor(Main main) {
         this.main = main;
+    }
+
+    public Holder holder(Player p) {
+        return map.get(p.getUniqueId());
     }
 
     @Override
@@ -124,6 +129,9 @@ public class Executor implements CommandExecutor, Listener {
                     missing.setMissing(Math.toIntExact(ChronoUnit.DAYS.between(local.getLatest().toLocalDateTime().toLocalDate(), LocalDate.now()) - 1));
                     missing.setMissingTime(Timestamp.valueOf(local.getLatest().toLocalDateTime().plusDays(1)));
                     main.getDatabase().save(missing);
+                    List all = L2Pool.pull(p.getUniqueId() + ":missing");
+                    if (!nil(all)) all.add(missing);
+                    L2Pool.remove(Pattern.compile(p.getUniqueId() + ":missing:(.)+"));
                 }
 
                 local.setDayTotal(1 + local.getDayTotal());

@@ -51,14 +51,17 @@ public enum L2Pool {
         return pull == INSTANCE.invalid ? null : (T) pull;
     }
 
+    public static <T> T pull(String key) {
+        return (T) INSTANCE.pool.asMap().get(key);
+    }
+
     public static List<SignMissing> missing(Player p, int limit) {
         if (limit >= 1) {
             LocalDate day = LocalDate.now().minusDays(limit);
-            Timestamp l = Timestamp.valueOf(day.atStartOfDay());
             return L2Pool.pull(p.getUniqueId() + ":missing:" + day, () -> Main.getPlugin().getDatabase().find(SignMissing.class)
                     .where("player = ? and missing_time > ?")
                     .setParameter(1, p.getUniqueId())
-                    .setParameter(2, l)
+                    .setParameter(2, Timestamp.valueOf(day.atStartOfDay()))
                     .orderBy("missing_time desc")
                     .findList());
         } else {
@@ -67,6 +70,14 @@ public enum L2Pool {
                     .setParameter(1, p.getUniqueId())
                     .orderBy("missing_time desc")
                     .findList());
+        }
+    }
+
+    public static void missing(Player p, int limit, List<SignMissing> all) {
+        if (limit >= 1) {
+            put(p.getUniqueId() + ":missing:" + LocalDate.now().minusDays(limit), all);
+        } else {
+            put(p.getUniqueId() + ":missing", all);
         }
     }
 

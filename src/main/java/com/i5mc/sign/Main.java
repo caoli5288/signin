@@ -15,7 +15,6 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -32,6 +31,7 @@ public class Main extends JavaPlugin {
 
     private static Main plugin;
     private ExecutorService backend;
+    private Executor executor;
 
     @SneakyThrows
     public void onEnable() {
@@ -70,7 +70,7 @@ public class Main extends JavaPlugin {
 
         LocalMgr.init(getConfig());
 
-        Executor executor = new Executor(this);
+        executor = new Executor(this);
 
         PluginCommand command = getCommand("sign");
         command.setExecutor(executor);
@@ -93,7 +93,8 @@ public class Main extends JavaPlugin {
 
             int day = Integer.parseInt(itr.next());
 
-            List<SignMissing> list = L2Pool.missing(p, itr.hasNext() ? Integer.parseInt(itr.next()) : -1);
+            int limit = itr.hasNext() ? Integer.parseInt(itr.next()) : -1;
+            List<SignMissing> list = L2Pool.missing(p, limit);
             Preconditions.checkState(!list.isEmpty(), "没有断签记录");
 
             //
@@ -101,41 +102,54 @@ public class Main extends JavaPlugin {
             LinkedList<SignMissing> all = new LinkedList<>(list);
             //
 
-            fix(p, day, all, removal);
+            val local = L2Pool.local(p);
 
-            execute(() -> getDatabase().save(all));
+            fix(p, local, day, all, removal);
 
-            if (removal.isEmpty()) {
-                return;
+            if (!all.isEmpty()) {
+                execute(() -> getDatabase().save(all));
             }
 
-            val local = L2Pool.local(p);
-            removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
+            L2Pool.missing(p, limit, new ArrayList<>(all));
+
+            if (!removal.isEmpty()) {
+                removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
+                execute(() -> getDatabase().delete(removal));
+            }
+
+            Holder holder = executor.holder(p);
+            holder.update();
 
             execute(() -> getDatabase().save(local));
-            execute(() -> getDatabase().delete(removal));
+
+            who.sendMessage("玩家 " + p.getName() + " 补签到完成");
         }
     }
 
-    private void fix(Player p, int day, LinkedList<SignMissing> all, List<SignMissing> removal) {
-        if (day < 1 || all.isEmpty()) return;
+    private void fix(Player p, LocalSign local, int day, LinkedList<SignMissing> all, List<SignMissing> removal) {
+        if (day < 1 || all.isEmpty()) {
+            return;
+        }
+
+        val logging = getDatabase().createEntityBean(SignLogging.class);
         val missing = all.element();
 
-        val logging = new SignLogging();
         logging.setPlayer(p.getUniqueId());
         logging.setName(p.getName());
         logging.setDateSigned(missing.getMissingTime());
 
-        execute(() -> getDatabase().insert(logging));
+        execute(() -> getDatabase().save(logging));
 
         missing.setMissing(missing.getMissing() - 1);
-        missing.setMissingTime(Timestamp.valueOf(missing.getMissingTime().toLocalDateTime().plusDays(1)));
+
+        local.setLasted(local.getLasted() + 1);
+        local.setDayTotal(local.getDayTotal() + 1);
 
         if (missing.getMissing() < 1) {
             removal.add(all.remove());
         }
 
-        fix(p, day - 1, all, removal);
+        fix(p, local, day - 1, all, removal);
     }
 
     @Override
