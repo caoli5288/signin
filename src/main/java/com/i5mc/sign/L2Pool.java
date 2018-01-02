@@ -3,13 +3,17 @@ package com.i5mc.sign;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.i5mc.sign.entity.LocalSign;
+import com.i5mc.sign.entity.SignMissing;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.entity.Player;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static com.i5mc.sign.$.nil;
 
@@ -34,6 +38,10 @@ public enum L2Pool {
         INSTANCE.pool.put(key, any);
     }
 
+    public static void remove(Pattern pattern) {
+        INSTANCE.pool.asMap().keySet().removeIf(key -> pattern.matcher(key).matches());
+    }
+
     @SneakyThrows
     public static <T> T pull(String key, Supplier<T> supplier) {
         val pull = INSTANCE.pool.get(key, () -> {
@@ -43,8 +51,27 @@ public enum L2Pool {
         return pull == INSTANCE.invalid ? null : (T) pull;
     }
 
+    public static List<SignMissing> missing(Player p, int limit) {
+        if (limit >= 1) {
+            LocalDate day = LocalDate.now().minusDays(limit);
+            Timestamp l = Timestamp.valueOf(day.atStartOfDay());
+            return L2Pool.pull(p.getName() + ":missing:" + day, () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+                    .where("player = ? and missing_time > ?")
+                    .setParameter(1, p.getUniqueId())
+                    .setParameter(2, l)
+                    .orderBy("missing_time desc")
+                    .findList());
+        } else {
+            return L2Pool.pull(p.getName() + ":missing", () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+                    .where("player = ?")
+                    .setParameter(1, p.getUniqueId())
+                    .orderBy("missing_time desc")
+                    .findList());
+        }
+    }
+
     public static void quit(Player p) {
-        INSTANCE.pool.invalidate(p.getName() + ":local");
+        remove(Pattern.compile(p.getName() + ":(.+)"));
     }
 
     @SneakyThrows

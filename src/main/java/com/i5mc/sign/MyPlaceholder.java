@@ -1,6 +1,7 @@
 package com.i5mc.sign;
 
 import com.i5mc.sign.entity.SignLogging;
+import com.i5mc.sign.entity.SignMissing;
 import lombok.val;
 import me.clip.placeholderapi.external.EZPlaceholderHook;
 import org.bukkit.entity.Player;
@@ -44,6 +45,11 @@ public class MyPlaceholder extends EZPlaceholderHook {
                 return list.isEmpty() ? null : list.iterator().next();
             });
             return logging == null ? "false" : "true";
+        }),
+
+        MISSING((p, input) -> {
+            List<SignMissing> list = L2Pool.missing(p, input.hasNext() ? Integer.parseInt(input.next()) : -1);
+            return "" + list;
         }),
 
         TOTAL((p, input) -> {

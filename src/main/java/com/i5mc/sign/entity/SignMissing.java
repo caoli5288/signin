@@ -1,5 +1,6 @@
 package com.i5mc.sign.entity;
 
+import com.i5mc.sign.$;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -20,4 +21,9 @@ public class SignMissing {
     private int lasted;
     private int missing;
     private Timestamp missingTime;
+
+    @Override
+    public String toString() {
+        return $.info(this);
+    }
 }
