@@ -58,10 +58,11 @@ public enum L2Pool {
                 local.setId(p.getUniqueId());
                 local.setName(p.getName());
             } else {
+                if (nil(local.getName())) local.setName(p.getName());
                 if (LocalDate.now().toEpochDay() - local.getLatest().toLocalDateTime().toLocalDate().toEpochDay() > 1) {
+                    local.setMissing(local.getLasted());
                     local.setLasted(-1);
                 }
-                if (nil(local.getName())) local.setName(p.getName());
             }
             return local;
         });

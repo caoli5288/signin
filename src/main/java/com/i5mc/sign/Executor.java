@@ -2,6 +2,7 @@ package com.i5mc.sign;
 
 import com.i5mc.sign.entity.LocalSign;
 import com.i5mc.sign.entity.SignLogging;
+import com.i5mc.sign.entity.SignMissing;
 import lombok.val;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -13,7 +14,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,6 +116,16 @@ public class Executor implements CommandExecutor, Listener {
                 val local = holder.sign;
                 val daily = LocalMgr.getDaily();
 
+                if (local.getMissing() >= 1) {
+                    SignMissing missing = main.getDatabase().createEntityBean(SignMissing.class);
+                    missing.setPlayer(p.getUniqueId());
+                    missing.setName(p.getName());
+                    missing.setLasted(local.getMissing());
+                    missing.setMissing(Math.toIntExact(ChronoUnit.DAYS.between(local.getLatest().toLocalDateTime().toLocalDate(), LocalDate.now()) - 1));
+                    missing.setMissingTime(Timestamp.valueOf(local.getLatest().toLocalDateTime().plusDays(1)));
+                    main.getDatabase().save(missing);
+                }
+
                 local.setDayTotal(1 + local.getDayTotal());
 
                 if (local.getLasted() < 1) {
@@ -121,7 +134,7 @@ public class Executor implements CommandExecutor, Listener {
                     local.setLasted(1 + local.getLasted());
                 }
 
-                local.setLatest(new Timestamp(System.currentTimeMillis()));
+                local.setLatest(Timestamp.from(Instant.now()));
 
                 val srv = p.getServer();
                 val con = srv.getConsoleSender();

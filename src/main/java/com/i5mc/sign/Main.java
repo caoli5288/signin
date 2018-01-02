@@ -2,9 +2,11 @@ package com.i5mc.sign;
 
 import com.i5mc.sign.entity.LocalSign;
 import com.i5mc.sign.entity.SignLogging;
+import com.i5mc.sign.entity.SignMissing;
 import com.mengcraft.simpleorm.DatabaseException;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,23 +24,38 @@ public class Main extends JavaPlugin {
     private static Main plugin;
     private ExecutorService backend;
 
-    @Override
+    @SneakyThrows
     public void onEnable() {
         saveDefaultConfig();
 
         plugin = this;
-        EbeanHandler handler = EbeanManager.DEFAULT.getHandler(this);
-        if (handler.isNotInitialized()) {
-            handler.define(LocalSign.class);
-            handler.define(SignLogging.class);
+        EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
+        if (db.isNotInitialized()) {
+            db.define(LocalSign.class);
+            db.define(SignLogging.class);
+            db.define(SignMissing.class);
             try {
-                handler.initialize();
+                db.initialize();
             } catch (DatabaseException e) {
                 throw new RuntimeException(e);
             }
         }
-        handler.reflect();
-        handler.install();
+        db.reflect();
+        db.install();
+
+        try {
+            db.getServer().createSqlUpdate("alter table `sign_logging` add index `idx_player` (`player`, `date_signed`);")
+                    .execute();
+        } catch (Exception ign) {
+//
+        }
+
+        try {
+            db.getServer().createSqlUpdate("alter table `sign_missing` add index `idx_player` (`player`, `missing_time`);")
+                    .execute();
+        } catch (Exception ign) {
+//
+        }
 
         backend = Executors.newSingleThreadExecutor();
 
