@@ -161,7 +161,7 @@ public class Executor implements CommandExecutor, Listener {
 
                 main.getDatabase().save(logging);
 
-                L2Pool.put(p.getName() + ":day:" + LocalDate.now(), logging);
+                L2Pool.put(p.getUniqueId() + ":day:" + LocalDate.now(), logging);
 
                 main.run(() -> {
                     holder.update();

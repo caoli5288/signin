@@ -31,7 +31,7 @@ public enum L2Pool {
     private final Object invalid = new Object();
 
     public static LocalSign pick(Player p) {
-        return (LocalSign) INSTANCE.pool.asMap().get(p.getName() + ":local");
+        return (LocalSign) INSTANCE.pool.asMap().get(p.getUniqueId() + ":local");
     }
 
     public static void put(String key, Object any) {
@@ -55,14 +55,14 @@ public enum L2Pool {
         if (limit >= 1) {
             LocalDate day = LocalDate.now().minusDays(limit);
             Timestamp l = Timestamp.valueOf(day.atStartOfDay());
-            return L2Pool.pull(p.getName() + ":missing:" + day, () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+            return L2Pool.pull(p.getUniqueId() + ":missing:" + day, () -> Main.getPlugin().getDatabase().find(SignMissing.class)
                     .where("player = ? and missing_time > ?")
                     .setParameter(1, p.getUniqueId())
                     .setParameter(2, l)
                     .orderBy("missing_time desc")
                     .findList());
         } else {
-            return L2Pool.pull(p.getName() + ":missing", () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+            return L2Pool.pull(p.getUniqueId() + ":missing", () -> Main.getPlugin().getDatabase().find(SignMissing.class)
                     .where("player = ?")
                     .setParameter(1, p.getUniqueId())
                     .orderBy("missing_time desc")
@@ -71,12 +71,12 @@ public enum L2Pool {
     }
 
     public static void quit(Player p) {
-        remove(Pattern.compile(p.getName() + ":(.+)"));
+        remove(Pattern.compile(p.getUniqueId() + ":(.+)"));
     }
 
     @SneakyThrows
     public static LocalSign local(Player p) {
-        return (LocalSign) INSTANCE.pool.get(p.getName() + ":local", () -> {
+        return (LocalSign) INSTANCE.pool.get(p.getUniqueId() + ":local", () -> {
             LocalSign local = Main.getPlugin()
                     .getDatabase()
                     .find(LocalSign.class, p.getUniqueId());
