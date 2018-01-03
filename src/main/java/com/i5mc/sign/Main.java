@@ -17,8 +17,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -91,10 +96,26 @@ public class Main extends JavaPlugin {
 
     private void view(CommandSender who, List<String> input) {
         val p = (Player) who;
-        runAsync(() -> {// IO blocking while inventory create
-            val l = new ViewHandler(p, -1).getInventory();
+        runAsync(() -> {// IO blocking while inventory build
+            int mon = input.isEmpty() ? -1 : month(input.iterator().next());
+            val l = new ViewHandler(p, mon, mon >= 1).getInventory();
+
             run(() -> p.openInventory(l));
         });
+    }
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-M");
+
+    @SneakyThrows
+    private int month(String label) {
+        if (label.matches("\\d+")) {
+            return Integer.parseInt(label);
+        }
+
+        Date l = dateFormat.parse(label);
+        LocalDate i = l.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        return Math.toIntExact(ChronoUnit.MONTHS.between(i.withDayOfMonth(1), LocalDate.now()));
     }
 
     private void fixing(CommandSender who, List<String> input) {
