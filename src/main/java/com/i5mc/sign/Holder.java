@@ -48,33 +48,33 @@ public class Holder implements InventoryHolder, Closeable {
         val item = new ItemStack(Material.BOOK);
         val meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.GOLD + "每日签到");
-        meta.setLore(getInfo());
+        meta.setLore(getInfo(sign));
 
         item.setItemMeta(meta);
 
         inventory.setItem(0, item);
     }
 
-    private List<String> getInfo() {
+    public static List<String> getInfo(LocalSign local) {
         ImmutableList.Builder<String> b = ImmutableList.builder();
 
-        if (signed) {
+        if (local.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now())) {
             b.add("§c已经领取");
             b.add("");
         } else {
             b.add("§e点击领奖");
             b.add("");
             b.add("§3基础奖励： §e" + LocalMgr.getDaily().getDisplay());
-            val gift = LocalMgr.getLast(1 + sign.getLasted());
+            val gift = LocalMgr.getLast(1 + local.getLasted());
             if (!nil(gift)) {
                 b.add("§3额外奖励： §e" + gift.getDisplay());
             }
             b.add("");
         }
 
-        b.add("§3连签天数： §e" + (sign.getLasted() < 1 ? "断签" : String.valueOf(sign.getLasted())));
-        b.add("§3总签天数： §e" + sign.getDayTotal());
-        val latest = sign.getLatest();
+        b.add("§3连签天数： §e" + (local.getLasted() < 1 ? "断签" : String.valueOf(local.getLasted())));
+        b.add("§3总签天数： §e" + local.getDayTotal());
+        val latest = local.getLatest();
         if (!nil(latest)) {
             b.add("§3上次签到： §e" + latest.toString().substring(0, 16));
         }

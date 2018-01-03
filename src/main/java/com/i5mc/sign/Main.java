@@ -83,7 +83,7 @@ public class Main extends JavaPlugin {
         val hook = new MyPlaceholder(this);
         hook.hook();
 
-        viewMaxMonth = getConfig().getInt("view.max_month", 2);
+        viewMaxMonth = getConfig().getInt("view.max_month", 1);
 
         PluginHelper.addExecutor(this, "补签", "补签.admin", this::fixing);
         PluginHelper.addExecutor(this, "签到详情", this::view);

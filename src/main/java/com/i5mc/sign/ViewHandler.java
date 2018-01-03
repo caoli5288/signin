@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -44,18 +45,16 @@ public class ViewHandler implements InventoryHolder {
     }
 
     private void init() {
-        inventory = Bukkit.createInventory(this, 54, "" + begin + " -> " + end);
+        inventory = Bukkit.createInventory(this, 54, "§c§l" + begin.format(DateTimeFormatter.ofPattern("yyyy年M月")) + "§6§l签到情况");
 
         fill(1, end.getDayOfMonth(), Panel.UNKNOWN);
 
         LocalSign local = L2Pool.local(p);
 
         LocalDate l = local.getLatest().toLocalDateTime().toLocalDate();
-        LocalDate now = LocalDate.now();
 
-        button(l.isEqual(now));
-
-        now(l, now);
+        button();
+        now(l, LocalDate.now());
 
         int lasted = local.getLasted();
         fill(lasted > 1 ? l.minusDays(lasted).plusDays(1) : l, l, Panel.YES);
@@ -75,31 +74,15 @@ public class ViewHandler implements InventoryHolder {
         }
     }
 
-    private void button(boolean b) {
-        ItemStack item = new ItemStack(138);
-        ItemMeta meta = item.getItemMeta();
-        if (b) {
-            meta.setDisplayName(ChatColor.RED + "今日已签到");
-        } else {
-            meta.setDisplayName(ChatColor.GREEN + "点击我签到");
-        }
-        item.setItemMeta(meta);
-        inventory.setItem(49, item);
-
+    private void button() {
         if (month <= Main.getViewMaxMonth()) {
-            item = new ItemStack(339);
-            meta = item.getItemMeta();
-            meta.setDisplayName("查看上个月");
-            item.setItemMeta(meta);
-            inventory.setItem(45, item);
+            inventory.setItem(45, Button.LEFT.button(this));
         }
+
+        inventory.setItem(49, Button.MIDDLE.button(this));
 
         if (month >= 1) {
-            item = new ItemStack(339);
-            meta = item.getItemMeta();
-            meta.setDisplayName("查看下个月");
-            item.setItemMeta(meta);
-            inventory.setItem(53, item);
+            inventory.setItem(53, Button.RIGHT.button(this));
         }
     }
 
@@ -140,22 +123,14 @@ public class ViewHandler implements InventoryHolder {
         inventory.setItem(slot - 1, item);
     }
 
-    public LocalDate getBegin() {
-        return begin;
-    }
-
-    public int getMonth() {
-        return month;
-    }
-
     public static void click(ViewHandler view, int slot) {
-        val click = Click.BY_SLOT.get(slot);
-        if (!nil(click)) {
-            click.click(view);
+        val button = Button.BY_SLOT.get(slot);
+        if (!nil(button)) {
+            button.click(view);
         }
     }
 
-    enum Click {
+    enum Button {
 
         LEFT(45) {
             void click(ViewHandler view) {
@@ -164,6 +139,14 @@ public class ViewHandler implements InventoryHolder {
                     Inventory inventory = new ViewHandler(view.p, view.month < 1 ? 1 : view.month + 1).getInventory();
                     main.run(() -> view.p.openInventory(inventory));
                 });
+            }
+
+            ItemStack button(ViewHandler view) {
+                ItemStack item = new ItemStack(339);
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName("查看上个月");
+                item.setItemMeta(meta);
+                return item;
             }
         },
 
@@ -176,6 +159,15 @@ public class ViewHandler implements InventoryHolder {
                     main.run(() -> view.p.closeInventory());
                 }
             }
+
+            ItemStack button(ViewHandler view) {
+                ItemStack item = new ItemStack(138);
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName(ChatColor.GOLD + "每日签到");
+                meta.setLore(Holder.getInfo(L2Pool.local(view.p)));
+                item.setItemMeta(meta);
+                return item;
+            }
         },
 
         RIGHT(53) {
@@ -186,24 +178,36 @@ public class ViewHandler implements InventoryHolder {
                     main.run(() -> view.p.openInventory(inventory));
                 });
             }
+
+            ItemStack button(ViewHandler view) {
+                ItemStack item = new ItemStack(339);
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName("查看下个月");
+                item.setItemMeta(meta);
+                return item;
+            }
         };
 
-        static final Map<Integer, Click> BY_SLOT = new HashMap<>();
+        static final Map<Integer, Button> BY_SLOT = new HashMap<>();
 
         static {
-            for (Click click : values()) {
+            for (Button click : values()) {
                 BY_SLOT.put(click.slot, click);
             }
         }
 
         private final int slot;
 
-        Click(int slot) {
+        Button(int slot) {
             this.slot = slot;
         }
 
         void click(ViewHandler view) {
-            throw new AbstractMethodError();
+            throw new UnsupportedOperationException("click");
+        }
+
+        ItemStack button(ViewHandler view) {
+            throw new UnsupportedOperationException("button");
         }
     }
 
