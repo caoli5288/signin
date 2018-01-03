@@ -7,6 +7,7 @@ import com.i5mc.sign.entity.SignMissing;
 import com.mengcraft.simpleorm.DatabaseException;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -15,14 +16,14 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import static com.i5mc.sign.$.nil;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 /**
  * Created on 16-8-10.
@@ -30,8 +31,12 @@ import static com.i5mc.sign.$.nil;
 public class Main extends JavaPlugin {
 
     private static Main plugin;
-    private ExecutorService backend;
+
+    @Getter
     private Executor executor;
+
+    @Getter
+    private static int viewMaxMonth;
 
     @SneakyThrows
     public void onEnable() {
@@ -66,8 +71,6 @@ public class Main extends JavaPlugin {
 //
         }
 
-        backend = Executors.newSingleThreadExecutor();
-
         LocalMgr.init(getConfig());
 
         executor = new Executor(this);
@@ -80,10 +83,21 @@ public class Main extends JavaPlugin {
         val hook = new MyPlaceholder(this);
         hook.hook();
 
-        PluginHelper.addExecutor(this, "补签", "补签.admin", this::missing);
+        viewMaxMonth = getConfig().getInt("view.max_month", 2);
+
+        PluginHelper.addExecutor(this, "补签", "补签.admin", this::fixing);
+        PluginHelper.addExecutor(this, "签到详情", this::view);
     }
 
-    private void missing(CommandSender who, List<String> input) {
+    private void view(CommandSender who, List<String> input) {
+        val p = (Player) who;
+        runAsync(() -> {// IO blocking while inventory create
+            val l = new ViewHandler(p, -1).getInventory();
+            run(() -> p.openInventory(l));
+        });
+    }
+
+    private void fixing(CommandSender who, List<String> input) {
         if (input.isEmpty()) {
             who.sendMessage("/补签 <玩家> <天数> [范围]");
         } else {
@@ -104,29 +118,29 @@ public class Main extends JavaPlugin {
 
             val local = L2Pool.local(p);
 
-            fix(p, local, day, all, removal);
+            fixing(p, local, day, all, removal);
 
             if (!all.isEmpty()) {
-                execute(() -> getDatabase().save(all));
+                runAsync(() -> getDatabase().save(all));
             }
 
             L2Pool.missing(p, limit, new ArrayList<>(all));
 
             if (!removal.isEmpty()) {
                 removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
-                execute(() -> getDatabase().delete(removal));
+                runAsync(() -> getDatabase().delete(removal));
             }
 
             Holder holder = executor.holder(p);
             holder.update();
 
-            execute(() -> getDatabase().save(local));
+            runAsync(() -> getDatabase().save(local));
 
             who.sendMessage("玩家 " + p.getName() + " 补签到完成");
         }
     }
 
-    private void fix(Player p, LocalSign local, int day, LinkedList<SignMissing> all, List<SignMissing> removal) {
+    private void fixing(Player p, LocalSign local, int day, LinkedList<SignMissing> all, List<SignMissing> removal) {
         if (day < 1 || all.isEmpty()) {
             return;
         }
@@ -136,37 +150,40 @@ public class Main extends JavaPlugin {
 
         logging.setPlayer(p.getUniqueId());
         logging.setName(p.getName());
-        logging.setDateSigned(missing.getMissingTime());
-
-        execute(() -> getDatabase().save(logging));
 
         missing.setMissing(missing.getMissing() - 1);
+        if (missing.getMissing() < 1) {
+            removal.add(all.remove());
+            logging.setDateSigned(missing.getMissingTime());
+        } else {
+            logging.setDateSigned(Timestamp.valueOf(missing.getMissingTime().toLocalDateTime().plusDays(missing.getMissing())));
+        }
+
+        logging.setFixTime(Timestamp.from(Instant.now()));
+
+        runAsync(() -> getDatabase().save(logging));
 
         local.setLasted(local.getLasted() + 1);
         local.setDayTotal(local.getDayTotal() + 1);
 
-        if (missing.getMissing() < 1) {
-            removal.add(all.remove());
-        }
-
-        fix(p, local, day - 1, all, removal);
+        fixing(p, local, day - 1, all, removal);
     }
 
-    @Override
-    public void onDisable() {
-        if (!nil(backend)) backend.shutdown();
+    public void runAsync(Runnable r) {
+        CompletableFuture.runAsync(r).exceptionally(this::log);
     }
 
-    public static Main getPlugin() {
-        return plugin;
-    }
-
-    public void execute(Runnable r) {
-        backend.execute(r);
+    private Void log(Throwable thr) {
+        getLogger().log(Level.SEVERE, "" + thr, thr);
+        return null;
     }
 
     public void run(Runnable j) {
         getServer().getScheduler().runTask(this, j);
+    }
+
+    public static Main getPlugin() {
+        return plugin;
     }
 
     public static void log(String message) {

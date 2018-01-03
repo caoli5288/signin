@@ -12,6 +12,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -26,6 +28,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static com.i5mc.sign.$.nil;
+import static org.bukkit.Material.AIR;
 
 /**
  * Created on 16-8-11.
@@ -56,20 +59,20 @@ public class Executor implements CommandExecutor, Listener {
         return false;
     }
 
-    private void sign(Player p) {
-        if (map.containsKey(p.getUniqueId())) {
-            val hold = map.get(p.getUniqueId());
-            if (nil(hold)) {
-                main.execute(() -> {
-                    val in = L2Pool.local(p);
-                    main.run(() -> {
-                        map.put(p.getUniqueId(), Holder.of(main, in));
-                        sign(p);
-                    });
+    public void sign(Player p) {
+        val hold = map.get(p.getUniqueId());
+        if (nil(hold)) {
+            main.runAsync(() -> {
+                val local = L2Pool.local(p);
+                val n = Holder.of(main, local);
+                n.update();
+                main.run(() -> {
+                    map.put(p.getUniqueId(), n);
+                    sign(p, n);
                 });
-            } else {
-                sign(p, hold);
-            }
+            });
+        } else {
+            sign(p, hold);
         }
     }
 
@@ -79,7 +82,7 @@ public class Executor implements CommandExecutor, Listener {
         } else if (locked.add(p.getUniqueId())) {
             val local = L2Pool.pick(p);
             if (local == null) {
-                main.execute(() -> {// IO blocking
+                main.runAsync(() -> {// IO blocking
                     main.run(() -> process(p, L2Pool.local(p)));
                 });
             } else {
@@ -108,16 +111,29 @@ public class Executor implements CommandExecutor, Listener {
 
     @EventHandler
     public void handle(InventoryClickEvent event) {
-        if (event.getInventory().getHolder() instanceof Holder) {
-            sign((Player) event.getWhoClicked(), (Holder) event.getInventory().getHolder());
+        InventoryHolder h = event.getClickedInventory().getHolder();
+        if (h instanceof Holder) {
             event.setCancelled(true);
+            ItemStack click = event.getCurrentItem();
+            if (click == null || click.getType() == AIR) {
+                return;
+            }
+            sign((Player) event.getWhoClicked(), (Holder) h);
+        } else if (h instanceof ViewHandler) {
+            event.setCancelled(true);
+            ItemStack click = event.getCurrentItem();
+            if (click == null || click.getType() == AIR) {
+                return;
+            }
+
+            ViewHandler.click(((ViewHandler) h), event.getRawSlot());
         }
     }
 
     private void sign(Player p, Holder holder) {
         if (!holder.signed) {
             holder.signed = true;// safety
-            main.execute(() -> {
+            main.runAsync(() -> {
                 val local = holder.sign;
                 val daily = LocalMgr.getDaily();
 
@@ -129,7 +145,7 @@ public class Executor implements CommandExecutor, Listener {
                     missing.setMissing(Math.toIntExact(ChronoUnit.DAYS.between(local.getLatest().toLocalDateTime().toLocalDate(), LocalDate.now()) - 1));
                     missing.setMissingTime(Timestamp.valueOf(local.getLatest().toLocalDateTime().plusDays(1)));
                     main.getDatabase().save(missing);
-                    List all = L2Pool.pull(p.getUniqueId() + ":missing");
+                    List<SignMissing> all = L2Pool.pull(p.getUniqueId() + ":missing");
                     if (!nil(all)) all.add(missing);
                     L2Pool.remove(Pattern.compile(p.getUniqueId() + ":missing:(.)+"));
                 }
@@ -165,7 +181,7 @@ public class Executor implements CommandExecutor, Listener {
                 SignLogging logging = main.getDatabase().createEntityBean(SignLogging.class);
                 logging.setPlayer(p.getUniqueId());
                 logging.setName(p.getName());
-                logging.setDateSigned(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+                logging.setDateSigned(Timestamp.from(Instant.now()));
 
                 main.getDatabase().save(logging);
 

@@ -21,4 +21,5 @@ public class SignLogging {
     @Column(length = 16)
     private String name;
     private Timestamp dateSigned;
+    private Timestamp fixTime;
 }

@@ -37,7 +37,7 @@ public class MyPlaceholder extends EZPlaceholderHook {
             LocalDate day = LocalDate.parse(itr.next());
             SignLogging logging = L2Pool.pull(p.getUniqueId() + ":day:" + day, () -> {
                 List<SignLogging> list = Main.getPlugin().getDatabase().find(SignLogging.class)
-                        .where("player = ? and date_signed = ?")
+                        .where("player = ? and date(date_signed) = ?")
                         .setParameter(1, p.getUniqueId())
                         .setParameter(2, String.valueOf(day))
                         .setMaxRows(1)

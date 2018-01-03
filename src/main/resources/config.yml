@@ -8,3 +8,5 @@ last:
   command:
   - "command %player%"
 total: ~
+view:
+  max_month: 1
