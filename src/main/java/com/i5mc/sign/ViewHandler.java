@@ -12,6 +12,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -42,14 +43,15 @@ public class ViewHandler implements InventoryHolder {
     }
 
     public Inventory getInventory() {
-        if (inventory == null) init();
+        if (inventory == null) {
+            inventory = Bukkit.createInventory(this, 54, "§c§l" + begin.format(DateTimeFormatter.ofPattern("yyyy年M月")));
+            fillAll();
+        }
 
         return inventory;
     }
 
-    private void init() {
-        inventory = Bukkit.createInventory(this, 54, "§c§l" + begin.format(DateTimeFormatter.ofPattern("yyyy年M月")) + "§6§l签到情况");
-
+    private void fillAll() {
         fill(1, end.getDayOfMonth(), Panel.UNKNOWN);
 
         if (!singleton) {
@@ -57,15 +59,20 @@ public class ViewHandler implements InventoryHolder {
         }
 
         LocalSign local = L2Pool.local(p);
+        LocalDate l = local.getLatest() == null ? null : local.getLatest().toLocalDateTime().toLocalDate();
 
-        LocalDate l = local.getLatest().toLocalDateTime().toLocalDate();
+        LocalDate now = LocalDate.now();
 
-        fill(l, LocalDate.now());
+        if (l == null) {
+            fill(now, now, Panel.NOT_YET);
+        } else {
+            fill(l, now);
 
-        int lasted = local.getLasted();
-        fill(lasted > 1 ? l.minusDays(lasted).plusDays(1) : l, l, Panel.YES);
+            fill(L2Pool.missing(p, -1).iterator());
 
-        fill(L2Pool.missing(p, -1).iterator());
+            long lasted = local.getLasted();
+            fill(lasted > 1 ? l.minusDays(lasted).plusDays(1) : l, l, Panel.YES);
+        }
     }
 
     private void fill(LocalDate latest, LocalDate now) {
@@ -160,8 +167,8 @@ public class ViewHandler implements InventoryHolder {
 
         MIDDLE(49) {
             void action(ViewHandler view) {
-                LocalDate latest = L2Pool.local(view.p).getLatest().toLocalDateTime().toLocalDate();
-                if (latest.isBefore(LocalDate.now())) {
+                Timestamp l = L2Pool.local(view.p).getLatest();
+                if (l == null || l.toLocalDateTime().toLocalDate().isBefore(LocalDate.now())) {
                     Main main = Main.getPlugin();
                     main.getExecutor().sign(view.p);
                     main.run(() -> view.p.closeInventory());// Avoid bug next tick close gui
@@ -229,6 +236,7 @@ public class ViewHandler implements InventoryHolder {
             void metadata(ItemStack item) {
                 ItemMeta meta = item.getItemMeta();
                 meta.setDisplayName(ChatColor.GREEN + "已签到");
+                item.setItemMeta(meta);
             }
         },
 

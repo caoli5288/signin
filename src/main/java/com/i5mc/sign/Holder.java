@@ -58,7 +58,9 @@ public class Holder implements InventoryHolder, Closeable {
     public static List<String> getInfo(LocalSign local) {
         ImmutableList.Builder<String> b = ImmutableList.builder();
 
-        if (local.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now())) {
+        val latest = local.getLatest();
+
+        if (!(latest == null) && local.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now())) {
             b.add("§c已经领取");
             b.add("");
         } else {
@@ -74,7 +76,7 @@ public class Holder implements InventoryHolder, Closeable {
 
         b.add("§3连签天数： §e" + (local.getLasted() < 1 ? "断签" : String.valueOf(local.getLasted())));
         b.add("§3总签天数： §e" + local.getDayTotal());
-        val latest = local.getLatest();
+
         if (!nil(latest)) {
             b.add("§3上次签到： §e" + latest.toString().substring(0, 16));
         }

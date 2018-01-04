@@ -1,6 +1,5 @@
 package com.i5mc.sign;
 
-import com.google.common.base.Preconditions;
 import com.i5mc.sign.entity.LocalSign;
 import com.i5mc.sign.entity.SignLogging;
 import com.i5mc.sign.entity.SignMissing;
@@ -120,45 +119,53 @@ public class Main extends JavaPlugin {
 
     private void fixing(CommandSender who, List<String> input) {
         if (input.isEmpty()) {
-            who.sendMessage("/补签 <玩家> <天数> [范围]");
-        } else {
-            Iterator<String> itr = input.iterator();
-            Player p = Bukkit.getPlayerExact(itr.next());
-            Preconditions.checkNotNull(p);
-
-            int day = Integer.parseInt(itr.next());
-
-            int limit = itr.hasNext() ? Integer.parseInt(itr.next()) : -1;
-            List<SignMissing> list = L2Pool.missing(p, limit);
-            Preconditions.checkState(!list.isEmpty(), "没有断签记录");
-
-            //
-            List<SignMissing> removal = new ArrayList<>();
-            LinkedList<SignMissing> all = new LinkedList<>(list);
-            //
-
-            val local = L2Pool.local(p);
-
-            fixing(p, local, day, all, removal);
-
-            if (!all.isEmpty()) {
-                runAsync(() -> getDatabase().save(all));
-            }
-
-            L2Pool.missing(p, limit, new ArrayList<>(all));
-
-            if (!removal.isEmpty()) {
-                removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
-                runAsync(() -> getDatabase().delete(removal));
-            }
-
-            Holder holder = executor.holder(p);
-            holder.update();
-
-            runAsync(() -> getDatabase().save(local));
-
-            who.sendMessage("玩家 " + p.getName() + " 补签到完成");
+            who.sendMessage("/补签 <玩家> <天> [范围]");
+            return;
         }
+
+        Iterator<String> itr = input.iterator();
+        Player p = Bukkit.getPlayerExact(itr.next());
+        if (p == null) {
+            who.sendMessage("指定玩家不在线");
+            return;
+        }
+
+
+        int day = Integer.parseInt(itr.next());
+        int l = itr.hasNext() ? Integer.parseInt(itr.next()) : -1;
+
+        List<SignMissing> list = L2Pool.missing(p, l);
+        if (list.isEmpty()) {
+            who.sendMessage("玩家无断签记录");
+            return;
+        }
+
+        //
+        List<SignMissing> removal = new ArrayList<>();
+        LinkedList<SignMissing> all = new LinkedList<>(list);
+        //
+
+        val local = L2Pool.local(p);
+
+        fixing(p, local, day, all, removal);
+
+        if (!all.isEmpty()) {
+            runAsync(() -> getDatabase().save(all));
+        }
+
+        L2Pool.missing(p, l, new ArrayList<>(all));
+
+        if (!removal.isEmpty()) {
+            removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
+            runAsync(() -> getDatabase().delete(removal));
+        }
+
+        Holder holder = executor.holder(p);
+        holder.update();
+
+        runAsync(() -> getDatabase().save(local));
+
+        who.sendMessage("玩家 " + p.getName() + " 补签到完成");
     }
 
     private void fixing(Player p, LocalSign local, int day, LinkedList<SignMissing> all, List<SignMissing> removal) {
