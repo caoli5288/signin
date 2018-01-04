@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Created by on 2017/8/7.
  */
-public enum LocalMgr {
+public enum ExtGiftMgr {
 
     INSTANCE;
 
@@ -30,7 +30,7 @@ public enum LocalMgr {
         return INSTANCE.daily;
     }
 
-    public static ExtGift getLast(int day) {
+    public static ExtGift getLasted(int day) {
         return INSTANCE.mapping.get(day);
     }
 }

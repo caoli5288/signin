@@ -78,7 +78,7 @@ public class Main extends JavaPlugin {
 //
         }
 
-        LocalMgr.init(getConfig());
+        ExtGiftMgr.init(getConfig());
 
         executor = new Executor(this);
 

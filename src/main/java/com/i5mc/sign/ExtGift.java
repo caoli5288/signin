@@ -1,10 +1,10 @@
 package com.i5mc.sign;
 
-import com.google.common.collect.ImmutableList;
 import lombok.Data;
 import lombok.val;
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -20,28 +20,25 @@ public class ExtGift {
     private String display;
     private List<String> command;
 
-    public ExtGift() {
-    }
-
-    public ExtGift(ConfigurationSection mapping) {
+    ExtGift(ConfigurationSection mapping) {
         day = mapping.getInt("day");
         display = mapping.getString("display");
         val l = mapping.get("command");
         if (l instanceof List) {
             command = (List<String>) l;
         } else {
-            command = ImmutableList.of(l.toString());
+            command = Arrays.asList(String.valueOf(l).split("\n"));
         }
     }
 
-    public ExtGift(Map<?, ?> mapping) {
+    ExtGift(Map<?, ?> mapping) {
         day = toInt(mapping.get("day"));
         display = mapping.get("display").toString();
         val l = mapping.get("command");
         if (l instanceof List) {
             command = (List<String>) l;
         } else {
-            command = ImmutableList.of(l.toString());
+            command = Arrays.asList(String.valueOf(l).split("\n"));
         }
     }
 }

@@ -4,6 +4,7 @@ import com.i5mc.sign.entity.LocalSign;
 import com.i5mc.sign.entity.SignLogging;
 import com.i5mc.sign.entity.SignMissing;
 import lombok.val;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,7 +40,7 @@ public class Executor implements CommandExecutor, Listener {
     private final Set<UUID> locked = new HashSet<>();
     private final Main main;
 
-    public Executor(Main main) {
+    Executor(Main main) {
         this.main = main;
     }
 
@@ -135,7 +136,7 @@ public class Executor implements CommandExecutor, Listener {
             holder.signed = true;// safety
             main.runAsync(() -> {
                 val local = holder.sign;
-                val daily = LocalMgr.getDaily();
+                val daily = ExtGiftMgr.getDaily();
 
                 if (local.getMissing() >= 1) {
                     SignMissing missing = main.db.bean(SignMissing.class);
@@ -163,15 +164,19 @@ public class Executor implements CommandExecutor, Listener {
                 val srv = p.getServer();
                 val con = srv.getConsoleSender();
                 for (String l : daily.getCommand()) {
-                    srv.dispatchCommand(con, l.replace("%player%", p.getName()));
+                    if (!l.isEmpty()) {
+                        srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                    }
                 }
                 p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + daily.getDisplay());
 
-                val gift = LocalMgr.getLast(local.getLasted());
+                val gift = ExtGiftMgr.getLasted(local.getLasted());
                 if (!nil(gift)) {
                     List<String> list = gift.getCommand();
                     for (String l : list) {
-                        srv.dispatchCommand(con, l.replace("%player%", p.getName()));
+                        if (!l.isEmpty()) {
+                            srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                        }
                     }
                     p.sendMessage("§b梦世界 §l>> §a您领取了额外奖励§e " + gift.getDisplay());
                 }
