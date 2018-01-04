@@ -138,13 +138,13 @@ public class Executor implements CommandExecutor, Listener {
                 val daily = LocalMgr.getDaily();
 
                 if (local.getMissing() >= 1) {
-                    SignMissing missing = main.getDatabase().createEntityBean(SignMissing.class);
+                    SignMissing missing = main.db.bean(SignMissing.class);
                     missing.setPlayer(p.getUniqueId());
                     missing.setName(p.getName());
                     missing.setLasted(local.getMissing());
                     missing.setMissing(Math.toIntExact(ChronoUnit.DAYS.between(local.getLatest().toLocalDateTime().toLocalDate(), LocalDate.now()) - 1));
                     missing.setMissingTime(Timestamp.valueOf(local.getLatest().toLocalDateTime().plusDays(1)));
-                    main.getDatabase().save(missing);
+                    main.db.save(missing);
                     List<SignMissing> all = L2Pool.pull(p.getUniqueId() + ":missing");
                     if (!nil(all)) all.add(missing);
                     L2Pool.remove(Pattern.compile(p.getUniqueId() + ":missing:(.)+"));
@@ -176,14 +176,14 @@ public class Executor implements CommandExecutor, Listener {
                     p.sendMessage("§b梦世界 §l>> §a您领取了额外奖励§e " + gift.getDisplay());
                 }
 
-                main.getDatabase().save(local);
+                main.db.save(local);
 
-                SignLogging logging = main.getDatabase().createEntityBean(SignLogging.class);
+                SignLogging logging = main.db.bean(SignLogging.class);
                 logging.setPlayer(p.getUniqueId());
                 logging.setName(p.getName());
                 logging.setDateSigned(Timestamp.from(Instant.now()));
 
-                main.getDatabase().save(logging);
+                main.db.save(logging);
 
                 L2Pool.put(p.getUniqueId() + ":day:" + LocalDate.now(), logging);
 

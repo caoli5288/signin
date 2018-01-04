@@ -34,7 +34,7 @@ public class ViewHandler implements InventoryHolder {
 
     private Inventory inventory;
 
-    ViewHandler(Player p, int month, boolean singleton) {
+    private ViewHandler(Player p, int month, boolean singleton) {
         this.p = p;
         this.month = month;
         this.singleton = singleton;
@@ -147,13 +147,17 @@ public class ViewHandler implements InventoryHolder {
         }
     }
 
+    public static Inventory newInventory(Player p, int month, boolean singleton) {
+        return new ViewHandler(p, month, singleton).getInventory();
+    }
+
     enum Button {
 
         PREV(45) {
             void action(ViewHandler view) {
                 Main main = Main.getPlugin();
                 main.runAsync(() -> {
-                    Inventory inventory = new ViewHandler(view.p, view.month < 1 ? 1 : view.month + 1, false).getInventory();
+                    Inventory inventory = ViewHandler.newInventory(view.p, view.month < 1 ? 1 : view.month + 1, false);
                     main.run(() -> view.p.openInventory(inventory));
                 });
             }
@@ -187,7 +191,7 @@ public class ViewHandler implements InventoryHolder {
             void action(ViewHandler view) {
                 Main main = Main.getPlugin();
                 main.runAsync(() -> {
-                    Inventory inventory = new ViewHandler(view.p, view.month - 1, false).getInventory();
+                    Inventory inventory = ViewHandler.newInventory(view.p, view.month - 1, false);
                     main.run(() -> view.p.openInventory(inventory));
                 });
             }

@@ -10,3 +10,4 @@ last:
 total: ~
 view:
   max_month: 1
+  direct_max_month: 12

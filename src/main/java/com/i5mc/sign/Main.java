@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
@@ -41,13 +42,15 @@ public class Main extends JavaPlugin {
 
     @Getter
     private static int viewMaxMonth;
+    private static int viewDirectMaxMonth;
+    EbeanHandler db;
 
     @SneakyThrows
     public void onEnable() {
         saveDefaultConfig();
 
         plugin = this;
-        EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
+        db = EbeanManager.DEFAULT.getHandler(this);
         if (db.isNotInitialized()) {
             db.define(LocalSign.class);
             db.define(SignLogging.class);
@@ -88,6 +91,7 @@ public class Main extends JavaPlugin {
         hook.hook();
 
         viewMaxMonth = getConfig().getInt("view.max_month", 1);
+        viewDirectMaxMonth = getConfig().getInt("view.direct_max_month", 12);
 
         PluginHelper.addExecutor(this, "补签", "补签.admin", this::fixing);
         PluginHelper.addExecutor(this, "签到详情", this::view);
@@ -97,13 +101,16 @@ public class Main extends JavaPlugin {
         val p = (Player) who;
         runAsync(() -> {// IO blocking while inventory build
             int mon = input.isEmpty() ? -1 : month(input.iterator().next());
-            val l = new ViewHandler(p, mon, mon >= 1).getInventory();
-
+            if (mon > viewDirectMaxMonth) {
+                who.sendMessage(ChatColor.RED + "最多可查看最近" + viewDirectMaxMonth + "个月签到");
+                return;
+            }
+            val l = ViewHandler.newInventory(p, mon, mon >= 1);
             run(() -> p.openInventory(l));
         });
     }
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-M");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("y-M");
 
     @SneakyThrows
     private int month(String label) {
@@ -150,20 +157,20 @@ public class Main extends JavaPlugin {
         fixing(p, local, day, all, removal);
 
         if (!all.isEmpty()) {
-            runAsync(() -> getDatabase().save(all));
+            runAsync(() -> db.save(all));
         }
 
         L2Pool.missing(p, l, new ArrayList<>(all));
 
         if (!removal.isEmpty()) {
             removal.forEach(missing -> local.setLasted(local.getLasted() + missing.getLasted()));
-            runAsync(() -> getDatabase().delete(removal));
+            runAsync(() -> db.delete(removal));
         }
 
         Holder holder = executor.holder(p);
         holder.update();
 
-        runAsync(() -> getDatabase().save(local));
+        runAsync(() -> db.save(local));
 
         who.sendMessage("玩家 " + p.getName() + " 补签到完成");
     }
@@ -173,7 +180,7 @@ public class Main extends JavaPlugin {
             return;
         }
 
-        val logging = getDatabase().createEntityBean(SignLogging.class);
+        val logging = db.bean(SignLogging.class);
         val missing = all.element();
 
         logging.setPlayer(p.getUniqueId());
@@ -189,7 +196,7 @@ public class Main extends JavaPlugin {
 
         logging.setFixTime(Timestamp.from(Instant.now()));
 
-        runAsync(() -> getDatabase().save(logging));
+        runAsync(() -> db.save(logging));
 
         local.setLasted(local.getLasted() + 1);
         local.setDayTotal(local.getDayTotal() + 1);
@@ -212,10 +219,6 @@ public class Main extends JavaPlugin {
 
     public static Main getPlugin() {
         return plugin;
-    }
-
-    public static void log(String message) {
-        plugin.getLogger().info(message);
     }
 
 }
