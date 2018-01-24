@@ -1,15 +1,20 @@
 daily:
-  display: ""
-  command:
-  - "command %player%"
+  display: "金币若干"
+  command: "money give %player_name% 100"
 last:
-- day: 20
-  display: ""
+- day: 50
+  display: "大量金币"
   command:
-  - "command %player%"
-total: ~
+  - "say %player_name% 领取了连续签到50天大奖"
+  - "money give %player_name% 50000"
+- day: 100
+  display: "巨额金币"
+  command: |
+    say %player_name% 领取了连续签到100天大奖
+    money give %player_name% 120000
 view:
   max_month: 1
+  direct_max_month: 12
 message:
   receive: "§b梦世界 §l>> §a您领取了签到奖励§e "
   receive_extra: "§b梦世界 §l>> §a您领取了额外奖励§e "

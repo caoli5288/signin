@@ -4,6 +4,7 @@ import com.i5mc.sign.entity.LocalSign;
 import com.i5mc.sign.entity.SignLogging;
 import com.i5mc.sign.entity.SignMissing;
 import lombok.val;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -39,7 +40,7 @@ public class Executor implements CommandExecutor, Listener {
     private final Set<UUID> locked = new HashSet<>();
     private final Main main;
 
-    public Executor(Main main) {
+    Executor(Main main) {
         this.main = main;
     }
 
@@ -135,16 +136,16 @@ public class Executor implements CommandExecutor, Listener {
             holder.signed = true;// safety
             main.runAsync(() -> {
                 val local = holder.sign;
-                val daily = LocalMgr.getDaily();
+                val daily = ExtGiftMgr.getDaily();
 
                 if (local.getMissing() >= 1) {
-                    SignMissing missing = main.getDatabase().createEntityBean(SignMissing.class);
+                    SignMissing missing = main.db.bean(SignMissing.class);
                     missing.setPlayer(p.getUniqueId());
                     missing.setName(p.getName());
                     missing.setLasted(local.getMissing());
                     missing.setMissing(Math.toIntExact(ChronoUnit.DAYS.between(local.getLatest().toLocalDateTime().toLocalDate(), LocalDate.now()) - 1));
                     missing.setMissingTime(Timestamp.valueOf(local.getLatest().toLocalDateTime().plusDays(1)));
-                    main.getDatabase().save(missing);
+                    main.db.save(missing);
                     List<SignMissing> all = L2Pool.pull(p.getUniqueId() + ":missing");
                     if (!nil(all)) all.add(missing);
                     L2Pool.remove(Pattern.compile(p.getUniqueId() + ":missing:(.)+"));
@@ -163,27 +164,31 @@ public class Executor implements CommandExecutor, Listener {
                 val srv = p.getServer();
                 val con = srv.getConsoleSender();
                 for (String l : daily.getCommand()) {
-                    srv.dispatchCommand(con, l.replace("%player%", p.getName()));
+                    if (!l.isEmpty()) {
+                        srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                    }
                 }
                 p.sendMessage(Main.getMessenger().find("receive", "§b梦世界 §l>> §a您领取了签到奖励§e ") + daily.getDisplay());
 
-                val gift = LocalMgr.getLast(local.getLasted());
+                val gift = ExtGiftMgr.getLasted(local.getLasted());
                 if (!nil(gift)) {
                     List<String> list = gift.getCommand();
                     for (String l : list) {
-                        srv.dispatchCommand(con, l.replace("%player%", p.getName()));
+                        if (!l.isEmpty()) {
+                            srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                        }
                     }
                     p.sendMessage(Main.getMessenger().find("receive_extra", "§b梦世界 §l>> §a您领取了额外奖励§e ") + gift.getDisplay());
                 }
 
-                main.getDatabase().save(local);
+                main.db.save(local);
 
-                SignLogging logging = main.getDatabase().createEntityBean(SignLogging.class);
+                SignLogging logging = main.db.bean(SignLogging.class);
                 logging.setPlayer(p.getUniqueId());
                 logging.setName(p.getName());
                 logging.setDateSigned(Timestamp.from(Instant.now()));
 
-                main.getDatabase().save(logging);
+                main.db.save(logging);
 
                 L2Pool.put(p.getUniqueId() + ":day:" + LocalDate.now(), logging);
 

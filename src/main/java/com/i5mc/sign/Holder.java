@@ -66,8 +66,8 @@ public class Holder implements InventoryHolder, Closeable {
         } else {
             b.add("§e点击领奖");
             b.add("");
-            b.add("§3基础奖励： §e" + LocalMgr.getDaily().getDisplay());
-            val gift = LocalMgr.getLast(1 + local.getLasted());
+            b.add("§3基础奖励： §e" + ExtGiftMgr.getDaily().getDisplay());
+            val gift = ExtGiftMgr.getLasted(1 + local.getLasted());
             if (!nil(gift)) {
                 b.add("§3额外奖励： §e" + gift.getDisplay());
             }

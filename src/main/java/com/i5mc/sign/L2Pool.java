@@ -58,14 +58,14 @@ public enum L2Pool {
     public static List<SignMissing> missing(Player p, int limit) {
         if (limit >= 1) {
             LocalDate day = LocalDate.now().minusDays(limit);
-            return L2Pool.pull(p.getUniqueId() + ":missing:" + day, () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+            return L2Pool.pull(p.getUniqueId() + ":missing:" + day, () -> Main.getPlugin().db.find(SignMissing.class)
                     .where("player = ? and missing_time > ?")
                     .setParameter(1, p.getUniqueId())
                     .setParameter(2, Timestamp.valueOf(day.atStartOfDay()))
                     .orderBy("missing_time desc")
                     .findList());
         } else {
-            return L2Pool.pull(p.getUniqueId() + ":missing", () -> Main.getPlugin().getDatabase().find(SignMissing.class)
+            return L2Pool.pull(p.getUniqueId() + ":missing", () -> Main.getPlugin().db.find(SignMissing.class)
                     .where("player = ?")
                     .setParameter(1, p.getUniqueId())
                     .orderBy("missing_time desc")
@@ -89,10 +89,10 @@ public enum L2Pool {
     public static LocalSign local(Player p) {
         return (LocalSign) INSTANCE.pool.get(p.getUniqueId() + ":local", () -> {
             LocalSign local = Main.getPlugin()
-                    .getDatabase()
+                    .db
                     .find(LocalSign.class, p.getUniqueId());
             if (nil(local)) {
-                local = Main.getPlugin().getDatabase().createEntityBean(LocalSign.class);
+                local = Main.getPlugin().db.bean(LocalSign.class);
                 local.setId(p.getUniqueId());
                 local.setName(p.getName());
             } else {
