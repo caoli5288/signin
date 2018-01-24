@@ -42,6 +42,9 @@ public class Main extends JavaPlugin {
     @Getter
     private static int viewMaxMonth;
 
+    @Getter
+    private static Messenger messenger;
+
     @SneakyThrows
     public void onEnable() {
         saveDefaultConfig();
@@ -88,6 +91,8 @@ public class Main extends JavaPlugin {
         hook.hook();
 
         viewMaxMonth = getConfig().getInt("view.max_month", 1);
+
+        messenger = new Messenger(this);
 
         PluginHelper.addExecutor(this, "补签", "补签.admin", this::fixing);
         PluginHelper.addExecutor(this, "签到详情", this::view);

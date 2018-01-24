@@ -165,7 +165,7 @@ public class Executor implements CommandExecutor, Listener {
                 for (String l : daily.getCommand()) {
                     srv.dispatchCommand(con, l.replace("%player%", p.getName()));
                 }
-                p.sendMessage("§b梦世界 §l>> §a您领取了签到奖励§e " + daily.getDisplay());
+                p.sendMessage(Main.getMessenger().find("receive", "§b梦世界 §l>> §a您领取了签到奖励§e ") + daily.getDisplay());
 
                 val gift = LocalMgr.getLast(local.getLasted());
                 if (!nil(gift)) {
@@ -173,7 +173,7 @@ public class Executor implements CommandExecutor, Listener {
                     for (String l : list) {
                         srv.dispatchCommand(con, l.replace("%player%", p.getName()));
                     }
-                    p.sendMessage("§b梦世界 §l>> §a您领取了额外奖励§e " + gift.getDisplay());
+                    p.sendMessage(Main.getMessenger().find("receive_extra", "§b梦世界 §l>> §a您领取了额外奖励§e ") + gift.getDisplay());
                 }
 
                 main.getDatabase().save(local);

@@ -10,3 +10,6 @@ last:
 total: ~
 view:
   max_month: 1
+message:
+  receive: "§b梦世界 §l>> §a您领取了签到奖励§e "
+  receive_extra: "§b梦世界 §l>> §a您领取了额外奖励§e "
