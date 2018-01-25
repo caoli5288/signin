@@ -165,7 +165,7 @@ public class Executor implements CommandExecutor, Listener {
                 val con = srv.getConsoleSender();
                 for (String l : daily.getCommand()) {
                     if (!l.isEmpty()) {
-                        srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                        main.run(() -> srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName()))));
                     }
                 }
                 p.sendMessage(Main.getMessenger().find("receive", "§b梦世界 §l>> §a您领取了签到奖励§e ") + daily.getDisplay());
@@ -175,7 +175,7 @@ public class Executor implements CommandExecutor, Listener {
                     List<String> list = gift.getCommand();
                     for (String l : list) {
                         if (!l.isEmpty()) {
-                            srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName())));
+                            main.run(() -> srv.dispatchCommand(con, PlaceholderAPI.setPlaceholders(p, l.replace("%player%", p.getName()))));
                         }
                     }
                     p.sendMessage(Main.getMessenger().find("receive_extra", "§b梦世界 §l>> §a您领取了额外奖励§e ") + gift.getDisplay());
