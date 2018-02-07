@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import static com.i5mc.sign.$.nil;
 
@@ -38,8 +37,8 @@ public enum L2Pool {
         INSTANCE.pool.put(key, any);
     }
 
-    public static void remove(Pattern pattern) {
-        INSTANCE.pool.asMap().keySet().removeIf(key -> pattern.matcher(key).matches());
+    public static void remove(String key) {
+        INSTANCE.pool.asMap().keySet().removeIf(l -> l.startsWith(key));
     }
 
     @SneakyThrows
@@ -82,7 +81,8 @@ public enum L2Pool {
     }
 
     public static void quit(Player p) {
-        remove(Pattern.compile(p.getUniqueId() + ":(.+)"));
+        String key = p.getUniqueId() + ":";
+        remove(key);
     }
 
     @SneakyThrows

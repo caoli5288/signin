@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import static com.i5mc.sign.$.nil;
 import static org.bukkit.Material.AIR;
@@ -148,7 +147,7 @@ public class Executor implements CommandExecutor, Listener {
                     main.db.save(missing);
                     List<SignMissing> all = L2Pool.pull(p.getUniqueId() + ":missing");
                     if (!nil(all)) all.add(missing);
-                    L2Pool.remove(Pattern.compile(p.getUniqueId() + ":missing:(.)+"));
+                    L2Pool.remove(p.getUniqueId() + ":missing:");
                 }
 
                 local.setDayTotal(1 + local.getDayTotal());
@@ -181,7 +180,7 @@ public class Executor implements CommandExecutor, Listener {
                     p.sendMessage(Main.getMessenger().find("receive_extra", "§b梦世界 §l>> §a您领取了额外奖励§e ") + gift.getDisplay());
                 }
 
-                main.db.save(local);
+                main.persist(local);
 
                 SignLogging logging = main.db.bean(SignLogging.class);
                 logging.setPlayer(p.getUniqueId());
