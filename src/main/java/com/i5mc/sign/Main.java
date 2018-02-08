@@ -224,12 +224,11 @@ public class Main extends JavaPlugin {
     }
 
     public void persist(LocalSign input) {
-        Update<LocalSign> sql = db.getServer().createUpdate(LocalSign.class, "update local_sign set name = :name, day_total = :total, lasted = :lasted, latest = :latest, missing = :missing where id = :id")
+        Update<LocalSign> sql = db.getServer().createUpdate(LocalSign.class, "update local_sign set name = :name, day_total = :total, lasted = :lasted, latest = :latest where id = :id")
                 .set("name", input.getName())
                 .set("total", input.getDayTotal())
                 .set("lasted", input.getLasted())
                 .set("latest", input.getLatest())
-                .set("missing", input.getMissing())
                 .set("id", input.getId());
         if (!(sql.execute() == 1)) {
             db.save(input);
