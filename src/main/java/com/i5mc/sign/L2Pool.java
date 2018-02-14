@@ -3,6 +3,7 @@ package com.i5mc.sign;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.i5mc.sign.entity.LocalSign;
+import com.i5mc.sign.entity.SignLogging;
 import com.i5mc.sign.entity.SignMissing;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -106,4 +107,13 @@ public enum L2Pool {
         });
     }
 
+    public static List<SignLogging> logging(Player p, LocalDate start, LocalDate end) {
+        return pull(p.getUniqueId() + ":logging:" + start + ":" + end, Main.getPlugin()
+                .db.find(SignLogging.class)
+                .where("player = :id and date_signed > :start and date_signed < :end")
+                .setParameter("id", p.getUniqueId())
+                .setParameter("start", Timestamp.valueOf(start.atStartOfDay()))
+                .setParameter("end", Timestamp.valueOf(end.atStartOfDay()))
+                .orderBy("date_signed")::findList);
+    }
 }

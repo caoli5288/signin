@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
+import static com.i5mc.sign.$.nil;
+
 /**
  * Created on 16-8-10.
  */
@@ -174,7 +176,7 @@ public class Main extends JavaPlugin {
         }
 
         Holder holder = executor.holder(p);
-        holder.update();
+        if (!nil(holder)) holder.update();
 
         runAsync(() -> db.save(local));
 
