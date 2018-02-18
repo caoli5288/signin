@@ -60,6 +60,11 @@ public class Executor implements CommandExecutor, Listener {
     }
 
     public void sign(Player p) {
+        if (!OpLock.lock(p.getUniqueId())) {
+            Main.getMessenger().send(p, "wait", "&6请稍后再试");
+            return;
+        }
+
         val hold = map.get(p.getUniqueId());
         if (nil(hold)) {
             main.runAsync(() -> {
@@ -198,6 +203,7 @@ public class Executor implements CommandExecutor, Listener {
                 });
             });
         }
+        OpLock.unlock(p.getUniqueId());
     }
 
 }

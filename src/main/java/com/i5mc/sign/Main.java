@@ -145,13 +145,17 @@ public class Main extends JavaPlugin {
             return;
         }
 
-
         int day = Integer.parseInt(itr.next());
         int l = itr.hasNext() ? Integer.parseInt(itr.next()) : -1;
 
         List<SignMissing> list = L2Pool.missing(p, l);
         if (list.isEmpty()) {
             who.sendMessage("玩家无断签记录");
+            return;
+        }
+
+        if (!OpLock.lock(p.getUniqueId())) {
+            messenger.send(p, "wait", "&6请稍后再试");
             return;
         }
 
@@ -179,6 +183,8 @@ public class Main extends JavaPlugin {
         if (!nil(holder)) holder.update();
 
         runAsync(() -> db.save(local));
+
+        OpLock.unlock(p.getUniqueId());
 
         who.sendMessage("玩家 " + p.getName() + " 补签到完成");
     }
