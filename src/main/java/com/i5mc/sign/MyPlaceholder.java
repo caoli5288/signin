@@ -29,6 +29,11 @@ public class MyPlaceholder extends EZPlaceholderHook {
 
     private enum Lab {
 
+        LASTED((p, input) -> {
+            val i = L2Pool.local(p);
+            return String.valueOf(i.getLasted());
+        }),
+
         TODAY((p, input) -> {
             val i = L2Pool.local(p);
             return i.getLatest().toLocalDateTime().toLocalDate().isEqual(LocalDate.now()) ? "true" : "false";
